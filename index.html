@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Classroom Values Cloud</title>
+  <script type="module">
+    // Firebase SDK import
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getDatabase, ref, onValue, update, increment } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDD60mg3uHGzAGBL8t_oQejjggssyeKe3w",
+        authDomain: "poll-8db12.firebaseapp.com",
+        projectId: "poll-8db12",
+        storageBucket: "poll-8db12.firebasestorage.app",
+        messagingSenderId: "581507589576",
+        appId: "1:581507589576:web:3e6edae0c4f39215194cfd",
+        measurementId: "G-PJR9VR7ZPH"
+      };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const values = [
+      "Honesty", "Respect", "Curiosity", "Responsibility", "Creativity", "Teamwork",
+      "Empathy", "Perseverance", "Confidence", "Compassion", "Discipline", "Gratitude",
+      "Patience", "Humor", "Listening", "Open-mindedness", "Enthusiasm", "Adaptability",
+      "Courage", "Kindness", "Focus", "Supportiveness", "Integrity", "Cooperation",
+      "Fairness", "Inclusivity", "Problem-solving", "Growth mindset", "Self-awareness",
+      "Humility", "Critical thinking", "Leadership", "Friendship", "Generosity",
+      "Helpfulness", "Self-control", "Forgiveness", "Flexibility", "Sleeping"
+    ];
+
+    const cloud = document.getElementById("cloud");
+
+    const voteCounts = {};
+    let totalVotes = 0;
+
+    function spiralPosition(index, fontSize) {
+      const cx = cloud.clientWidth / 2;
+      const cy = cloud.clientHeight / 2;
+      const angle = 0.5 * index;
+      const radius = 20 + (index * 20);
+      const x = cx + radius * Math.cos(angle) - fontSize / 2;
+      const y = cy + radius * Math.sin(angle) - fontSize / 2;
+      return { x, y };
+    }
+
+    function updateCloud() {
+      cloud.innerHTML = "";
+      const visible = Object.keys(voteCounts).filter(v => voteCounts[v] / totalVotes >= 0.05);
+      visible.sort((a, b) => voteCounts[b] - voteCounts[a]);
+
+      visible.forEach((value, i) => {
+        const count = voteCounts[value];
+        const fontSize = 14 + Math.min(40, (count / totalVotes) * 100);
+        const word = document.createElement("span");
+        word.className = "word";
+        word.textContent = value;
+        word.style.fontSize = fontSize + "px";
+        const pos = spiralPosition(i, fontSize);
+        word.style.left = pos.x + "px";
+        word.style.top = pos.y + "px";
+        word.style.opacity = 1;
+        word.style.transform = Math.random() > 0.5 ? "rotate(0deg)" : "rotate(-90deg)";
+        cloud.appendChild(word);
+      });
+    }
+
+    const voteRef = ref(db, "votes");
+    onValue(voteRef, (snapshot) => {
+      const data = snapshot.val() || {};
+      Object.assign(voteCounts, data);
+      totalVotes = Object.values(data).reduce((a, b) => a + b, 0);
+      updateCloud();
+    });
+
+    document.getElementById("voteForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const v1 = document.getElementById("value1").value;
+      const v2 = document.getElementById("value2").value;
+      const v3 = document.getElementById("value3").value;
+      if (new Set([v1, v2, v3]).size < 3) {
+        alert("Please select three different values.");
+        return;
+      }
+      const updates = {};
+      [v1, v2, v3].forEach(v => {
+        updates[`/votes/${v}`] = increment(1);
+      });
+      update(ref(db), updates);
+      e.target.reset();
+    });
+  </script>
+  <style>
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: linear-gradient(to right, #a1c4fd, #c2e9fb);
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+    form {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 500px;
+      margin-bottom: 40px;
+    }
+    select {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background: #4a90e2;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    #cloud {
+      position: relative;
+      width: 1000px;
+      height: 600px;
+      border: 2px dashed rgba(0, 0, 0, 0.1);
+      margin-top: 30px;
+      overflow: hidden;
+    }
+    .word {
+      position: absolute;
+      transition: all 0.8s ease-in-out;
+      color: #333;
+      white-space: nowrap;
+      transform-origin: center;
+      cursor: default;
+      opacity: 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌟 Vote for Your Top 3 Classroom Values</h1>
+  <form id="voteForm">
+    <label for="value1">Your #1 Value:</label>
+    <select id="value1" required></select>
+    <label for="value2">Your #2 Value:</label>
+    <select id="value2" required></select>
+    <label for="value3">Your #3 Value:</label>
+    <select id="value3" required></select>
+    <button type="submit">Submit</button>
+  </form>
+  <div id="cloud"></div>
+  <script>
+    ["value1", "value2", "value3"].forEach(id => {
+      const select = document.getElementById(id);
+      values.forEach(v => {
+        const option = document.createElement("option");
+        option.value = v;
+        option.textContent = v;
+        select.appendChild(option);
+      });
+    });
+  </script>
+</body>
+</html>
