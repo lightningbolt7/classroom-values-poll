@@ -2,22 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Classroom Values Cloud</title>
   <script type="module">
-    // Firebase SDK import
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
     import { getDatabase, ref, onValue, update, increment } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
     const firebaseConfig = {
-        apiKey: "AIzaSyDD60mg3uHGzAGBL8t_oQejjggssyeKe3w",
-        authDomain: "poll-8db12.firebaseapp.com",
-        projectId: "poll-8db12",
-        storageBucket: "poll-8db12.firebasestorage.app",
-        messagingSenderId: "581507589576",
-        appId: "1:581507589576:web:3e6edae0c4f39215194cfd",
-        measurementId: "G-PJR9VR7ZPH"
-      };
+      apiKey: "AIzaSyDD60mg3uHGzAGBL8t_oQejjggssyeKe3w",
+      authDomain: "poll-8db12.firebaseapp.com",
+      projectId: "poll-8db12",
+      storageBucket: "poll-8db12.firebasestorage.app",
+      messagingSenderId: "581507589576",
+      appId: "1:581507589576:web:3e6edae0c4f39215194cfd",
+      measurementId: "G-PJR9VR7ZPH"
+    };
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
@@ -49,6 +48,7 @@
 
     function updateCloud() {
       cloud.innerHTML = "";
+      if (totalVotes === 0) return;
       const visible = Object.keys(voteCounts).filter(v => voteCounts[v] / totalVotes >= 0.05);
       visible.sort((a, b) => voteCounts[b] - voteCounts[a]);
 
@@ -92,7 +92,19 @@
       update(ref(db), updates);
       e.target.reset();
     });
+
+    // Populate selects here after DOM is ready
+    ["value1", "value2", "value3"].forEach(id => {
+      const select = document.getElementById(id);
+      values.forEach(v => {
+        const option = document.createElement("option");
+        option.value = v;
+        option.textContent = v;
+        select.appendChild(option);
+      });
+    });
   </script>
+
   <style>
     body {
       font-family: 'Nunito', sans-serif;
@@ -164,16 +176,5 @@
     <button type="submit">Submit</button>
   </form>
   <div id="cloud"></div>
-  <script>
-    ["value1", "value2", "value3"].forEach(id => {
-      const select = document.getElementById(id);
-      values.forEach(v => {
-        const option = document.createElement("option");
-        option.value = v;
-        option.textContent = v;
-        select.appendChild(option);
-      });
-    });
-  </script>
 </body>
 </html>
